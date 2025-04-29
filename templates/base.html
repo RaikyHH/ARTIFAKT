@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{% block window_title %}ARTIFAKT{% endblock %} - Threat Intel Portal</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    </head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <div class="logo-area">
+                <a href="{{ url_for('index') }}" class="logo-link">
+                    <img src="{{ url_for('static', filename='alpaka.png') }}" alt="ARTIFAKT Logo" class="logo-image">
+                    <span class="visually-hidden">ARTIFAKT</span>
+                </a>
+                <p class="subtitle">
+                    <span class="highlight">A</span><span class="highlight">R</span><span class="highlight">T</span>efakt- und <span class="highlight">I</span>ndikator-<span class="highlight">F</span>undstelle zur <span class="highlight">A</span>nlage und <span class="highlight">K</span>lassifizierung von <span class="highlight">T</span>hreats
+                </p>
+            </div>
+
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Start</a></li>
+                    <li><a href="{{ url_for('upload_artifact') }}">Artefakt Upload</a></li>
+                    <li><a href="{{ url_for('submit_ioc') }}">IoC Eingabe</a></li>
+                    <li><a href="{{ url_for('upload_malware') }}">Malware Analyse</a></li>
+                    <li><a href="{{ url_for('lookup') }}">Reputations-Check</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="flash-messages">
+                  {% for category, message in messages %}
+                    <div class="alert alert-{{ category|default('info') }}" role="alert">
+                      {{ message }}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            <h2 class="page-title">{% block page_heading %}Willkommen{% endblock %}</h2>
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; {{ current_year }} ARTIFAKT</p>
+            <p>Veröffentlicht unter der
+                <a href="https://github.com/RaikyHH/ARTIFAKT/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" title="Lizenz auf GitHub ansehen">MIT Lizenz</a>.
+            </p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

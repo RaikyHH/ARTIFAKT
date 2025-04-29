@@ -1,0 +1,8 @@
+werkzeug
+pymisp
+flask 
+pycti
+requests
+pyzipper
+python-dotenv
+flask_talisman

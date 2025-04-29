@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block window_title %}Artefakt Upload{% endblock %}
+{% block page_heading %}Artefakt-Sample hochladen{% endblock %}
+
+{% block content %}
+    <p>Laden Sie hier Dateien hoch, die als Artefakte gesammelt werden sollen. Geben Sie bitte Quellsystem und Casenummer an.</p>
+
+    {% if upload_result %}
+        <div class="upload-result result-block {{ 'status-ok' if upload_result.success else 'status-error' }}">
+            <strong>Upload-Status:</strong> {{ upload_result.message | e }}
+            {% if upload_result.success %}
+                <br>Originaldatei: {{ upload_result.original_filename | e }}
+                <br>Gespeichert als: {{ upload_result.zip_filename | e }}
+                <br>Quelle: {{ upload_result.source_system | e }}
+                <br>Case#: {{ upload_result.case_number | e }}
+                {% if upload_result.comment %}
+                    <br>Kommentar: {{ upload_result.comment | e }}
+                {% endif %}
+            {% endif %}
+        </div>
+        <hr>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('upload_artifact') }}" enctype="multipart/form-data" class="styled-form" id="artifact-form">
+        <div class="form-group">
+            <label for="file">Datei auswählen (Pflichtfeld):</label>
+            <input type="file" id="file" name="file" required>
+        </div>
+
+        <div class="form-group">
+            <label for="source_system">Quellsystem (Pflichtfeld):</label>
+            <input type="text" id="source_system" name="source_system" value="{{ source_system | default('', true) | e }}" required placeholder="z.B. Proxy_Log_Server, EDR_System, Mailgateway">
+        </div>
+
+        <div class="form-group">
+            <label for="case_number">Casenummer (Pflichtfeld):</label>
+            <input type="text" id="case_number" name="case_number" value="{{ case_number | default('', true) | e }}" required placeholder="INC0000012345 oder #654321">
+        </div>
+
+        <div class="form-group">
+            <label for="comment">Kommentar (Optional):</label>
+            <textarea id="comment" name="comment" rows="4" placeholder="Zusätzliche Hinweise zum Artefakt...">{{ comment | default('', true) | e }}</textarea>
+        </div>
+
+        <div class="form-group form-actions">
+            <button type="submit" class="btn btn-primary" id="submit-button">Hochladen & Archivieren</button>
+            <div class="loading-indicator" id="loading-indicator" style="display: none;">
+                 <div class="spinner"></div>
+                 <span>Wird hochgeladen...</span>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('artifact-form');
+        const submitButton = document.getElementById('submit-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const fileInput = document.getElementById('file');
+
+        if (form && submitButton && loadingIndicator && fileInput) {
+            form.addEventListener('submit', function(event) {
+                if (fileInput.files.length === 0) {
+                    console.log("Keine Datei ausgewählt.");
+                    return;
+                }
+                submitButton.disabled = true;
+                loadingIndicator.style.display = 'inline-flex';
+                submitButton.style.display = 'none';
+            });
+        } else {
+            console.error("Formular-Elemente für Ladeanzeige nicht gefunden!");
+        }
+    });
+</script>
+{% endblock %}

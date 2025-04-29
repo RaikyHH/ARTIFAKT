@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block window_title %}IoC Eingabe / Upload{% endblock %}
+{% block page_heading %}IoC Eingabe / Upload{% endblock %}
+
+{% block content %}
+     <p>Geben Sie IoCs (einen pro Zeile) in das Textfeld ein oder laden Sie eine Datei hoch (z.B. .txt, .yar, .csv). Die Indikatoren werden an interne Systeme (MISP, OpenCTI) übermittelt.</p>
+
+    <form method="post" enctype="multipart/form-data" class="styled-form" id="ioc-form">
+        <div class="form-group">
+            <label for="ioc_text">IoCs (eins pro Zeile):</label>
+            <textarea id="ioc_text" name="ioc_text" rows="10">{{ request.form['ioc_text'] if request.method == 'POST' else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="file">Oder Datei hochladen (erlaubt: {{ config.get('ALLOWED_EXTENSIONS_IOC', ['txt', 'csv', 'yar'])|join(', ') }}):</label>
+            <input type="file" id="file" name="file" accept=".txt,.yar,.csv">
+        </div>
+
+        <div class="form-group form-actions">
+            <button type="submit" class="btn btn-primary" id="submit-button-ioc">IoCs Senden & Importieren</button>
+            <div class="loading-indicator" id="loading-indicator-ioc" style="display: none;">
+                 <div class="spinner"></div>
+                 <span>Wird verarbeitet...</span>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const formIoc = document.getElementById('ioc-form');
+        const submitButtonIoc = document.getElementById('submit-button-ioc');
+        const loadingIndicatorIoc = document.getElementById('loading-indicator-ioc');
+        const iocTextInput = document.getElementById('ioc_text');
+        const fileInputIoc = document.getElementById('file');
+
+        if (formIoc && submitButtonIoc && loadingIndicatorIoc && iocTextInput && fileInputIoc) {
+            formIoc.addEventListener('submit', function(event) {
+                const textValue = iocTextInput.value.trim();
+                const fileSelected = fileInputIoc.files.length > 0;
+
+                if (!textValue && !fileSelected) {
+                    console.log("Keine IoCs eingegeben oder Datei ausgewählt.");
+                    // Verhindere ggf. das Absenden, falls Backend-Validierung nicht ausreicht
+                    // event.preventDefault();
+                    return;
+                }
+
+                submitButtonIoc.disabled = true;
+                loadingIndicatorIoc.style.display = 'inline-flex';
+                submitButtonIoc.style.display = 'none';
+            });
+        } else {
+            console.error("Formular-Elemente für IoC-Ladeanzeige nicht gefunden!");
+        }
+    });
+</script>
+{% endblock %}

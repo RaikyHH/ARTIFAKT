@@ -1,1 +1,15 @@
+{% extends "base.html" %}
 
+{% block window_title %}Startseite{% endblock %}
+
+{% block page_heading %}Willkommen bei ARTIFAKT{% endblock %}
+
+{% block content %}
+    <p>Bitte wählen Sie eine Aktion aus der Navigation.</p>
+    <ul>
+        <li><b>Artefakt Upload:</b> Laden Sie beliebige Dateien hoch, die als Samples dienen (z.B. verdächtige Dokumente, Logs).</li>
+        <li><b>IoC Eingabe/Upload:</b> Geben Sie Indicators of Compromise (IPs, Domains, Hashes, etc.) direkt ein oder laden Sie eine Datei (.txt, .yar, .csv) hoch.</li>
+        <li><b>Malware Upload & Analyse:</b> Laden Sie eine einzelne Datei hoch, um sie an eine (interne) Sandbox zur Analyse zu senden. Sie erhalten einen Statusbericht zurück.</li>
+        <li><b>Reputations-Check:</b> geben Sie eine IP oder Domäne an und lassen Sie sich einen Richtwert anzeigen, der angibt, ob diese eher gut- oder bösartig sind.</li>
+    </ul>
+{% endblock %}

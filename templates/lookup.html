@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block window_title %}Reputation Check{% endblock %}
+{% block page_heading %}Reputation Check{% endblock %}
+
+{% block content %}
+    <p>Geben Sie einen Indikator (IP, Domain, Hash, URL, etc.) ein, um dessen Reputation zu prüfen.</p>
+
+    <form method="post" class="styled-form lookup-form" id="lookup-form">
+        <div class="form-group">
+            <label for="query">Suchbegriff:</label>
+            <input type="text" id="query" name="query" value="{{ query | default('', true) | e }}" required placeholder="z.B. 8.8.8.8, example.com, ...">
+        </div>
+
+        <div class="form-group enrichment-options">
+            <fieldset>
+                <legend>Quellen auswählen:</legend>
+                <div>
+                    <input type="radio" id="internal" name="enrichment_type" value="internal" {% if enrichment_type == 'internal' %}checked{% endif %}>
+                    <label for="internal">Nur Intern (OpenCTI, MISP)</label>
+                </div>
+                <div>
+                    <input type="radio" id="external" name="enrichment_type" value="external" {% if enrichment_type == 'external' %}checked{% endif %}>
+                    <label for="external">Nur Extern (VirusTotal, Sandbox)</label>
+                </div>
+                 <div>
+                    <input type="radio" id="both" name="enrichment_type" value="both" {% if enrichment_type == 'both' %}checked{% endif %}>
+                    <label for="both">Intern & Extern</label>
+                 </div>
+            </fieldset>
+        </div>
+
+        <div class="form-group form-actions">
+             <button type="submit" class="btn btn-primary" id="submit-button-lookup">Prüfen</button>
+             <div class="loading-indicator" id="loading-indicator-lookup" style="display: none;">
+                 <div class="spinner"></div>
+                 <span>Prüfung läuft...</span>
+             </div>
+        </div>
+    </form>
+
+    {% if results_list is defined %}
+      {% if request.method == 'POST' or results_list %}
+        <hr>
+        <div class="results-section lookup-results">
+            {% if query %}
+                <h3>Ergebnisse für: <span class="query-term">{{ query | e }}</span></h3>
+            {% endif %}
+
+            {% if not results_list and request.method == 'POST' %}
+                <p>Keine Ergebnisse von den Connectors für "{{ query | e }}" erhalten.</p>
+            {% elif results_list %}
+                <table class="results-table enrichment-table">
+                    <thead>
+                        <tr>
+                            <th>Quelle</th>
+                            <th>Verdict</th>
+                            <th>TLP</th>
+                            <th>Score</th>
+                            <th>Zusatz-Infos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results_list %}
+                        <tr>
+                            <td>{{ result.connector_name | e }}</td>
+
+                            {% set current_status = result.get('status', 'unknown') | lower %}
+                            <td class="verdict status-{{ current_status | e }}">
+                                {% set verdict_text = '' %}
+                                {% if current_status == 'ok' or current_status == 'benign' %} {% set verdict_text = 'Gutartig' %}
+                                {% elif current_status == 'suspicious' %} {% set verdict_text = 'Verdächtig' %}
+                                {% elif current_status == 'malicious' %} {% set verdict_text = 'Bösartig' %}
+                                {% elif current_status == 'info' %} {% set verdict_text = 'Info' %}
+                                {% elif current_status == 'not_found' %} {% set verdict_text = 'N/G' %}
+                                {% elif current_status == 'error' %} {% set verdict_text = 'Fehler' %}
+                                {% else %} {% set verdict_text = result.status | title if result.status else 'Unbekannt' %}
+                                {% endif %}
+                               {{ verdict_text }}
+                            </td>
+
+                            <td>
+                                {% set tlp_value = result.details.get('tlp') if result.details else None %}
+                                {% if tlp_value %}
+                                    <span class="tlp-label tlp-{{ tlp_value.split(':')[-1]|lower|replace('+strict','') }}">{{ tlp_value }}</span>
+                                {% else %} - {% endif %}
+                            </td>
+
+                            {% set score = result.details.get('score') if result.details else None %}
+                            <td class="score-cell">
+                                {{ score if score is not none else '-' }}
+                            </td>
+
+                            <td class="additional-info">
+                                {% if result.error_message %} <span class="error-text">Fehler: {{ result.error_message | e }}</span>
+                                {% elif result.link %}
+                                    {% set external_sources = ['VirusTotal'] %}
+                                    {% if result.connector_name in external_sources %}
+                                        <a href="{{ result.link }}" target="_blank" title="Details auf {{ result.connector_name }} ansehen" class="vt-link">Externen Bericht öffnen 🔗</a><br>
+                                    {% endif %}
+                                {% endif %}
+                                {% if result.details and result.details.event_id %} <small>Event: {{ result.details.event_id }} ({{ (result.details.event_info[:30] + '...') if result.details.event_info and result.details.event_info|length > 30 else result.details.event_info }})</small><br> {% endif %}
+                                {% if result.details and result.details.labels %} <small>Labels: {{ result.details.labels | join(', ') }}</small><br> {% endif %}
+                                {% if result.details and result.details.detection_ratio and result.details.detection_ratio != 'N/A' %} <small>VT Ratio: {{ result.details.detection_ratio }}</small><br> {% endif %}
+                                {% set something_shown = (result.link and result.connector_name in external_sources) or (result.details and result.details.event_id) or (result.details and result.details.labels) or (result.details and result.details.get('detection_ratio') and result.details.get('detection_ratio') != 'N/A') %}
+                                {% if not result.error_message and not something_shown and result.summary %} <small>{{ result.summary | e }}</small> {% endif %}
+                                {% if not result.error_message and not something_shown and not result.summary %} <small>(Keine Zusatzinfos)</small> {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+             {% endif %}
+        </div>
+      {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const formLookup = document.getElementById('lookup-form');
+        const submitButtonLookup = document.getElementById('submit-button-lookup');
+        const loadingIndicatorLookup = document.getElementById('loading-indicator-lookup');
+        const queryInputLookup = document.getElementById('query');
+
+        if (formLookup && submitButtonLookup && loadingIndicatorLookup && queryInputLookup) {
+            formLookup.addEventListener('submit', function(event) {
+                if (queryInputLookup.value.trim() === '') { return; }
+                submitButtonLookup.disabled = true;
+                loadingIndicatorLookup.style.display = 'inline-flex';
+                submitButtonLookup.style.display = 'none';
+            });
+        } else { console.error("Lookup Ladeanzeige Elemente nicht gefunden!"); }
+    });
+</script>
+{% endblock %}
