@@ -6,3 +6,4 @@ requests
 pyzipper
 python-dotenv
 flask_talisman
+gunicorn>=20.0

@@ -1,0 +1,35 @@
+# Environment file
+.env
+*.env.*
+
+# Git files
+.git/
+.gitignore
+
+# Python cache/compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment folders
+venv/
+.venv/
+
+# Uploads
+uploads/
+
+# IDE/Editor
+.idea/
+.vscode/
+
+# OS specific files
+*.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Readme 
+README.md
