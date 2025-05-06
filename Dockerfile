@@ -7,8 +7,6 @@ ENV FLASK_APP=app.py
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends some-package && rm -rf /var/lib/apt/lists/*
-
 RUN addgroup --system --gid 1001 artifaktgroup && \
     adduser --system --uid 1001 --ingroup artifaktgroup artifaktuser
 
